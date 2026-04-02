@@ -1,0 +1,112 @@
+### robot_localization EKF configuration for the Roomba robot
+#
+# Fuses:
+#   /odom         — wheel encoder odometry  (nav_msgs/Odometry)
+#   /imu/data_raw — GY-87 MPU6050 IMU       (sensor_msgs/Imu)
+#
+# Output: /odometry/filtered  (nav_msgs/Odometry)
+#
+# State vector: [x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az]
+#               [0  1  2  3     4      5    6   7   8   9      10      11    12  13  14 ]
+#
+# Config matrix row order matches state vector above.
+# true  = use this value from this sensor
+# false = ignore this value from this sensor
+
+ekf_node:
+  ros__parameters:
+
+    frequency: 50.0          # Hz — matches Pico output rate
+    sensor_timeout: 0.1      # seconds before a sensor is considered stale
+    two_d_mode: true         # ground robot — ignore z, roll, pitch
+    publish_tf: true         # broadcast odom → base_link TF
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_link
+    world_frame: odom        # use odom as world frame (no map yet)
+
+    # ----------------------------------------------------------------
+    # Odometry source: /odom (encoder-based differential drive)
+    # ----------------------------------------------------------------
+    odom0: /odom
+    odom0_config: [
+      true,  true,  false,   # x,     y,     z
+      false, false, true,    # roll,  pitch, yaw
+      true,  false, false,   # vx,    vy,    vz
+      false, false, true,    # vroll, vpitch,vyaw
+      false, false, false    # ax,    ay,    az
+    ]
+    odom0_differential: false   # use absolute pose from odometry
+    odom0_relative: false
+    odom0_queue_size: 10
+
+    # Odometry covariance override — tune if robot drifts
+    # Higher value = less trust in this sensor
+    # odom0_pose_rejection_threshold: 5.0
+    # odom0_twist_rejection_threshold: 1.0
+
+    # ----------------------------------------------------------------
+    # IMU source: /imu/data_raw (MPU6050 gyroscope)
+    # We only use angular velocity (gz) from the IMU.
+    # Orientation is not provided (orientation_covariance[0] = -1).
+    # Acceleration is too noisy on a ground robot to use for position.
+    # ----------------------------------------------------------------
+    imu0: /imu/data_raw
+    imu0_config: [
+      false, false, false,   # x,     y,     z
+      false, false, false,   # roll,  pitch, yaw      (not provided)
+      false, false, false,   # vx,    vy,    vz
+      false, false, true,    # vroll, vpitch, vyaw    (gz — primary use)
+      false, false, false    # ax,    ay,    az       (too noisy)
+    ]
+    imu0_differential: false
+    imu0_relative: false
+    imu0_queue_size: 10
+    imu0_remove_gravitational_acceleration: true
+
+    # ----------------------------------------------------------------
+    # Process noise covariance (Q matrix)
+    # Controls how much uncertainty grows during prediction step.
+    # Increase a value if the filter is too slow to respond to motion.
+    # Decrease if the output is too noisy.
+    # Order: x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az
+    # ----------------------------------------------------------------
+    process_noise_covariance: [
+      0.05,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.05,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.06,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.03,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.03,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.06,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.025, 0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.025, 0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.04,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.01,  0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.01,  0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.02,  0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.01,  0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.01,  0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.015
+    ]
+
+    # ----------------------------------------------------------------
+    # Initial estimate covariance (P matrix)
+    # How uncertain we are about the initial state.
+    # ----------------------------------------------------------------
+    initial_estimate_covariance: [
+      1e-9,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   1e-9,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   1e-9,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   1e-9,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   1e-9,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   1e-9,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   1e-9,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   1e-9,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   1e-9,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   1e-9,  0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   1e-9,  0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   1e-9,  0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   1e-9,  0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   1e-9,  0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   1e-9
+    ]

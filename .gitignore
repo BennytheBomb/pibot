@@ -1,0 +1,23 @@
+# ROS 2 build artifacts
+pibot_ws/build/
+pibot_ws/install/
+pibot_ws/log/
+
+# Generated maps and TF frame dumps
+pibot_ws/frames_*.gv
+pibot_ws/frames_*.pdf
+pibot_ws/map.pgm
+pibot_ws/map.yaml
+
+# PlatformIO build artifacts
+pico_firmware/.pio/
+pico_firmware/.vscode/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Editor
+.vscode/
+*.swp

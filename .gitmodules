@@ -1,0 +1,7 @@
+[submodule "pibot_ws/src/camera_ros"]
+	path = pibot_ws/src/camera_ros
+	url = https://github.com/christianrauch/camera_ros.git
+[submodule "pibot_ws/src/libcamera"]
+	path = pibot_ws/src/libcamera
+	url = https://github.com/raspberrypi/libcamera.git
+	shallow = true

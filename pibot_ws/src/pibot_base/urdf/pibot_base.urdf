@@ -1,0 +1,223 @@
+<?xml version="1.0"?>
+<!--
+  pibot_base.urdf — revised with precise laser-cut measurements
+  All values in metres. REP-103 convention: x=forward, y=left, z=up
+  Origin (base_link) is at ground level, centre of robot footprint.
+
+  Platform stack (z = centre of each platform disc):
+    bottom_platform : z = 0.0507  (wheel_radius 32.5 + 16.2 clearance + 2 half-thickness)
+    mid_platform    : z = 0.0947  (bottom_top 52.7 + 40 gap + 2)
+    top_platform    : z = 0.1387  (mid_top    96.7 + 40 gap + 2)
+    top_platform top: z = 0.1407
+
+  Lidar body centre  : z = 0.16785  (bottom 140.6 + half 27.25)
+  Laser plane        : z = 0.1861   (verified)
+-->
+<robot name="pibot_base">
+
+  <material name="wood">
+    <color rgba="0.82 0.67 0.45 1.0"/>
+  </material>
+  <material name="dark_grey">
+    <color rgba="0.2 0.2 0.2 1.0"/>
+  </material>
+  <material name="black">
+    <color rgba="0.1 0.1 0.1 1.0"/>
+  </material>
+  <material name="blue">
+    <color rgba="0.2 0.4 0.8 1.0"/>
+  </material>
+  <material name="red">
+    <color rgba="0.8 0.1 0.1 1.0"/>
+  </material>
+
+  <!-- base_link: robot origin at ground level -->
+  <link name="base_link"/>
+
+  <!-- Bottom platform z_centre = 0.0507 -->
+  <joint name="base_to_bottom_platform" type="fixed">
+    <parent link="base_link"/>
+    <child  link="bottom_platform"/>
+    <origin xyz="0.0 0.0 0.0507" rpy="0 0 0"/>
+  </joint>
+  <link name="bottom_platform">
+    <visual>
+      <geometry><cylinder radius="0.105" length="0.004"/></geometry>
+      <material name="wood"/>
+    </visual>
+    <collision>
+      <geometry><cylinder radius="0.105" length="0.004"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="0.15"/>
+      <inertia ixx="0.0004" ixy="0" ixz="0" iyy="0.0004" iyz="0" izz="0.0008"/>
+    </inertial>
+  </link>
+
+  <!-- Middle platform z_centre = 0.0947 -->
+  <joint name="base_to_mid_platform" type="fixed">
+    <parent link="base_link"/>
+    <child  link="mid_platform"/>
+    <origin xyz="0.0 0.0 0.0947" rpy="0 0 0"/>
+  </joint>
+  <link name="mid_platform">
+    <visual>
+      <geometry><cylinder radius="0.105" length="0.004"/></geometry>
+      <material name="wood"/>
+    </visual>
+    <collision>
+      <geometry><cylinder radius="0.105" length="0.004"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="0.15"/>
+      <inertia ixx="0.0004" ixy="0" ixz="0" iyy="0.0004" iyz="0" izz="0.0008"/>
+    </inertial>
+  </link>
+
+  <!-- Top platform z_centre = 0.1387 -->
+  <joint name="base_to_top_platform" type="fixed">
+    <parent link="base_link"/>
+    <child  link="top_platform"/>
+    <origin xyz="0.0 0.0 0.1387" rpy="0 0 0"/>
+  </joint>
+  <link name="top_platform">
+    <visual>
+      <geometry><cylinder radius="0.105" length="0.004"/></geometry>
+      <material name="wood"/>
+    </visual>
+    <collision>
+      <geometry><cylinder radius="0.105" length="0.004"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="0.15"/>
+      <inertia ixx="0.0004" ixy="0" ixz="0" iyy="0.0004" iyz="0" izz="0.0008"/>
+    </inertial>
+  </link>
+
+  <!-- Left wheel: x=-0.0553, y=+0.0865, z=0.0325 -->
+  <joint name="left_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child  link="left_wheel"/>
+    <origin xyz="-0.0553 0.0865 0.0325" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+  <link name="left_wheel">
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry><cylinder radius="0.0325" length="0.026"/></geometry>
+      <material name="dark_grey"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry><cylinder radius="0.0325" length="0.026"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="0.05"/>
+      <inertia ixx="0.00002" ixy="0" ixz="0" iyy="0.00002" iyz="0" izz="0.00004"/>
+    </inertial>
+  </link>
+
+  <!-- Right wheel: x=-0.0553, y=-0.0865, z=0.0325 -->
+  <joint name="right_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child  link="right_wheel"/>
+    <origin xyz="-0.0553 -0.0865 0.0325" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+  <link name="right_wheel">
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry><cylinder radius="0.0325" length="0.026"/></geometry>
+      <material name="dark_grey"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry><cylinder radius="0.0325" length="0.026"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="0.05"/>
+      <inertia ixx="0.00002" ixy="0" ixz="0" iyy="0.00002" iyz="0" izz="0.00004"/>
+    </inertial>
+  </link>
+
+  <!-- Ball caster: contact 0.8mm above ground, ball centre z=0.010325 -->
+  <joint name="ball_caster_joint" type="fixed">
+    <parent link="base_link"/>
+    <child  link="ball_caster"/>
+    <origin xyz="0.0868 0.0 0.010325" rpy="0 0 0"/>
+  </joint>
+  <link name="ball_caster">
+    <visual>
+      <geometry><sphere radius="0.009525"/></geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <geometry><sphere radius="0.009525"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="0.01"/>
+      <inertia ixx="0.0000001" ixy="0" ixz="0" iyy="0.0000001" iyz="0" izz="0.0000001"/>
+    </inertial>
+  </link>
+
+  <!-- Lidar: body centre z=0.16785, laser plane z=0.1861 -->
+  <joint name="lidar_joint" type="fixed">
+    <parent link="base_link"/>
+    <child  link="lidar_link"/>
+    <origin xyz="0.0069 0.0 0.16785" rpy="0 0 3.14159"/>
+  </joint>
+  <link name="lidar_link">
+    <visual>
+      <geometry><cylinder radius="0.035" length="0.0545"/></geometry>
+      <material name="blue"/>
+    </visual>
+    <collision>
+      <geometry><cylinder radius="0.035" length="0.0545"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="0.085"/>
+      <inertia ixx="0.00003" ixy="0" ixz="0" iyy="0.00003" iyz="0" izz="0.00006"/>
+    </inertial>
+  </link>
+
+  <!-- Camera lens centre: x=+0.100, y=0.0, z=0.1151 -->
+  <joint name="camera_joint" type="fixed">
+    <parent link="base_link"/>
+    <child  link="camera_link"/>
+    <origin xyz="0.100 0.0 0.1151" rpy="0 0 0"/>
+  </joint>
+  <link name="camera_link">
+    <visual>
+      <geometry><box size="0.0081 0.025 0.025"/></geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <geometry><box size="0.0081 0.025 0.025"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="0.003"/>
+      <inertia ixx="0.0000001" ixy="0" ixz="0" iyy="0.0000001" iyz="0" izz="0.0000001"/>
+    </inertial>
+  </link>
+
+  <!-- IMU (GY-87, mounted backwards yaw=pi): x=+0.004, y=-0.004, z=0.1136 -->
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/>
+    <child  link="imu_link"/>
+    <origin xyz="0.004 -0.004 0.1136" rpy="0 0 3.14159"/>
+  </joint>
+  <link name="imu_link">
+    <visual>
+      <geometry><box size="0.02 0.016 0.002"/></geometry>
+      <material name="red"/>
+    </visual>
+    <collision>
+      <geometry><box size="0.02 0.016 0.002"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="0.003"/>
+      <inertia ixx="0.0000001" ixy="0" ixz="0" iyy="0.0000001" iyz="0" izz="0.0000001"/>
+    </inertial>
+  </link>
+
+</robot>
