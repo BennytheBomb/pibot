@@ -177,9 +177,9 @@ The `camera_ros` package by Christian Rauch is included in the repository for op
 |-----------|-------------|-----|------------|-------|
 | Raspberry Pi 5 | 8GB RAM, main compute | 1 | €127.90 | €127.90 |
 | Raspberry Pi Pico 2W | RP2350 + WiFi + BT, with headers | 1 | €8.50 | €8.50 |
-| Raspberry Pi Camera Module 3 | 12MP, IMX708 sensor | 1 | €28.90 | €28.90 |
+| _Raspberry Pi Camera Module 3 (optional)_ | 12MP, IMX708 sensor | 1 | €28.90 | €28.90 |
 | Raspberry Pi Active Cooler | Fan for Pi 5 | 1 | €5.90 | €5.90 |
-| Raspberry Pi 27W USB-C PSU | For desktop use / initial setup | 1 | €12.40 | €12.40 |
+| _Raspberry Pi 27W USB-C PSU (optional)_ | For desktop use / initial setup | 1 | €12.40 | €12.40 |
 | Seeed RPLIDAR A1M8 | 360° 2D laser scanner, 12m range | 1 | €89.90 | €89.90 |
 | DFRobot TT Motor with Encoder | 160RPM, 120:1, quadrature encoder | 2 | €7.30 | €14.60 |
 | SparkFun TB6612FNG | Dual motor driver with headers | 1 | €15.90 | €15.90 |
@@ -266,7 +266,7 @@ Ground          z=0mm       Wheels (rear) + ball caster (front)
 **Software:** Affinity Designer — export as DXF for laser cutter.
 
 **Files in `cad/`:**
-- `chassis.afdesign` — source file
+- `chassis.af` — source file
 - `chassis.dxf` — laser cutter export
 
 **Kerf:** The laser removes a small amount of material at each cut. This was not accounted for in the original design — joints designed to be tight fits were slightly loose as a result. **Compensate with wood glue** which produces a strong and stable result. Alternatively, offset your cut lines outward by your laser's kerf width (typically 0.1–0.2mm for plywood).
