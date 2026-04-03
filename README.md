@@ -2,7 +2,7 @@
 
 > A fully autonomous indoor mobile robot built on Raspberry Pi 5, featuring SLAM-based mapping, Nav2 autonomous navigation, and a complete ROS 2 software stack. Built from scratch as a learning project and open sourced for the robotics community.
 
-![PiBot Robot](media/robot_front.jpg)
+![PiBot Robot](media/robot_front.jpeg)
 
 ---
 
