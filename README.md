@@ -43,7 +43,7 @@ PiBot is a fully autonomous indoor mobile robot built from scratch using off-the
 - **Navigation:** Nav2 with Regulated Pure Pursuit controller
 - **Sensor Fusion:** robot_localization EKF fusing wheel odometry and IMU
 
-The project started as a ball-following robot (see `pibot_pkg`) following the [Digikey ROS 2 Tutorial Series](https://www.youtube.com/watch?v=mjrxf8EFSb8&list=PLEBQazB0HUySWueUF2zNyrA8LSX3rDvE7) and evolved into the full autonomous navigation stack in `pibot_base`.
+The project started as a ball-following robot following the [Digikey ROS 2 Tutorial Series](https://www.youtube.com/watch?v=mjrxf8EFSb8&list=PLEBQazB0HUySWueUF2zNyrA8LSX3rDvE7) and evolved into the full autonomous navigation stack in `pibot_base`.
 
 **Navigation accuracy:** ~±10cm position, ~±30° heading at goal.
 **Power bank runtime:** ~1 hour on the Anker Prime 12,000mAh.
@@ -205,7 +205,7 @@ The `camera_ros` package by Christian Rauch was used for Camera Module 3 integra
 | Wood glue | Standard PVA wood glue | For chassis support structure assembly |
 | M2/M2.5/M3 assorted screw kit | 900-piece set | See note below |
 | M3 × 30mm screws (extra) | Motor mounting | Not included in standard kits — source separately |
-| M3 × 40mm hex standoffs | Platform spacing | 6 total (3 per gap × 2 gaps) |
+| M2.5 × 40mm hex standoffs | Platform spacing | 6x 40mm standoffs or 12x 20mm standoffs (screwed together) |
 
 **Screw sizes used:**
 - M2.5 × 8mm, 12mm, 20mm — Pi 5 mounting
@@ -275,7 +275,6 @@ Ground          z=0mm       Wheels (rear) + ball caster (front)
 **Tips:**
 - Use hairline stroke (0.001mm) for cut lines
 - Cut test holes before the full platforms to verify motor shaft and standoff diameters
-- The motor mounting piece may need iteration — allow time for this
 - Label each platform before removing from the cutter sheet
 
 ### 4.5 Support Structure Assembly
@@ -294,22 +293,22 @@ Apply wood glue to mating surfaces, clamp or hold for 30 minutes, allow 24 hours
 4. Attach T-support to underside of bottom platform
 5. Mount ball caster to front vertical bar of T-support
 6. Install wheels on motor output shafts
-7. Install M3 × 40mm standoffs between platforms (3 per gap)
-8. Mount Anker power bank to bottom platform
+7. Install M2.5 × 40mm standoffs between platforms (3 per gap)
+8. Mount power bank to bottom platform
 9. Mount Pi 5 to middle platform (M2.5 standoffs)
-10. Attach breadboard to middle platform
+10. Peel off breadboard bottom and stick glued side to middle platform
 11. Mount Pico, motor driver on breadboard
 12. Mount IMU — note orientation for software correction
 13. Mount lidar on standoffs on top platform
 14. Mount camera at front of top platform
 15. Route and connect all wiring (Section 5)
-16. Mount slide switch accessibly on chassis wall
+16. Mount slide switch accessibly on the top cutout
 
 ---
 
 ## 5. Wiring and Electronics
 
-> **See:** `docs/wiring_diagram.pdf` for the complete visual wiring diagram
+![Wiring Diagram](docs/wiring_diagram.jpg)
 
 ### 5.1 Power Architecture
 
@@ -332,21 +331,21 @@ Common GND: Pi 5 GND + Pico GND + Battery − + TB6612FNG GND + Encoder GND + IM
 
 ### 5.2 Pico GPIO Pin Assignments
 
-| GPIO | Physical Pin | Function |
-|------|-------------|----------|
-| 9 | 12 | PWMB — right motor PWM |
-| 10 | 14 | BIN2 — right motor direction |
-| 11 | 15 | BIN1 — right motor direction |
-| 12 | 16 | STBY — motor driver standby |
-| 13 | 17 | AIN1 — left motor direction |
-| 14 | 19 | AIN2 — left motor direction |
-| 15 | 20 | PWMA — left motor PWM |
-| 16 | 21 | SDA — IMU I2C data (I2C0) |
-| 17 | 22 | SCL — IMU I2C clock (I2C0) |
-| 18 | 24 | ENC_LEFT_A |
-| 19 | 25 | ENC_LEFT_B |
-| 20 | 26 | ENC_RIGHT_A |
-| 21 | 27 | ENC_RIGHT_B |
+| GPIO | Function |
+|------|----------|
+| 9 | PWMB — right motor PWM |
+| 10 | BIN2 — right motor direction |
+| 11 | BIN1 — right motor direction |
+| 12 | STBY — motor driver standby |
+| 13 | AIN1 — left motor direction |
+| 14 | AIN2 — left motor direction |
+| 15 | PWMA — left motor PWM |
+| 16 | SDA — IMU I2C data (I2C0) |
+| 17 | SCL — IMU I2C clock (I2C0) |
+| 18 | ENC_LEFT_A |
+| 19 | ENC_LEFT_B |
+| 20 | ENC_RIGHT_A |
+| 21 | ENC_RIGHT_B |
 
 ### 5.3 TB6612FNG Connections
 
@@ -707,8 +706,6 @@ echo "source ~/pibot/pibot_ws/install/setup.bash" >> ~/.bashrc
 | Package | Purpose |
 |---------|---------|
 | `pibot_base` | Main package: serial bridge, URDF, EKF, SLAM, Nav2, launch files |
-| `pibot_pkg` | Ball following starter project — good entry point for beginners |
-| `ball_follow_interface` | Custom ROS 2 message types for ball following |
 | `camera_ros` | Camera Module 3 ROS 2 driver (submodule) |
 | `libcamera` | Raspberry Pi libcamera fork (submodule, shallow clone) |
 
@@ -1265,10 +1262,6 @@ Firmware crash requires manual BOOTSEL reset procedure. This cannot be avoided w
 
 ## Documents Still Needed
 
-- [ ] `docs/wiring_diagram.pdf` — Full wiring diagram. Must clearly show GPIO connections, power rails, common ground, encoder connections, and include the voltage level note. Recommended tool: Fritzing or draw.io
-- [ ] `docs/chassis_dims.pdf` — Dimensioned drawing with all hole positions
-- [ ] `cad/chassis.afdesign` — Affinity Designer source file
-- [ ] `cad/chassis.dxf` — Laser cutter export
 - [ ] `media/robot_front.jpg` — Front view of assembled robot
 - [ ] `media/robot_side.jpg` — Side view showing three platform layers
 - [ ] `media/robot_top.jpg` — Top view showing lidar and camera
