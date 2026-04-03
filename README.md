@@ -2,7 +2,7 @@
 
 > A fully autonomous indoor mobile robot built on Raspberry Pi 5, featuring SLAM-based mapping, Nav2 autonomous navigation, and a complete ROS 2 software stack. Built from scratch as a learning project and open sourced for the robotics community.
 
-<!-- ![PiBot Robot](media/robot.jpg) -->
+<!-- TODO: ![PiBot Robot](media/robot.jpg) -->
 
 ---
 
@@ -34,7 +34,7 @@
 
 PiBot is a fully autonomous indoor mobile robot built from scratch using off-the-shelf components and open source software. The project covers the complete robotics stack:
 
-- **Hardware:** Custom laser-cut plywood chassis, differential drive with encoder motors, RPLIDAR A1, GY-87 IMU, Raspberry Pi Camera Module 3
+- **Hardware:** Custom laser-cut plywood chassis, differential drive with encoder motors, RPLIDAR A1, GY-87 IMU
 - **Firmware:** PID velocity control on Raspberry Pi Pico 2W
 - **Middleware:** ROS 2 Jazzy on Raspberry Pi 5 running Ubuntu 24.04
 - **Perception:** RPLIDAR A1M8 for 2D lidar scanning
@@ -44,6 +44,8 @@ PiBot is a fully autonomous indoor mobile robot built from scratch using off-the
 - **Sensor Fusion:** robot_localization EKF fusing wheel odometry and IMU
 
 The project started as a ball-following robot following the [Digikey ROS 2 Tutorial Series](https://www.youtube.com/watch?v=mjrxf8EFSb8&list=PLEBQazB0HUySWueUF2zNyrA8LSX3rDvE7) and evolved into the full autonomous navigation stack in `pibot_base`.
+
+> **Note:** The Raspberry Pi Camera Module 3 and `camera_ros` driver are included in the repository for optional use (e.g. computer vision, object detection) but are **not required** for replicating the navigation robot. The core navigation stack uses only the RPLIDAR and IMU.
 
 **Navigation accuracy:** ~±10cm position, ~±30° heading at goal.
 **Power bank runtime:** ~1 hour on the Anker Prime 12,000mAh.
@@ -60,7 +62,6 @@ graph TD
         NAV2[Nav2\npath planning + control]
         RSP[robot_state_publisher\nURDF + TF static]
         LIDAR[rplidar_ros\nlidar driver]
-        CAM[camera_ros\ncamera driver]
     end
 
     subgraph Pico["Raspberry Pi Pico 2W — bare metal"]
@@ -71,10 +72,9 @@ graph TD
 
     subgraph Hardware["Hardware"]
         TB[TB6612FNG\nmotor driver]
-        MOTORS[TT Motors ×2\n120:1 encoder]
+        MOTORS[TT Motors ×2\nwith encoder]
         GY87[GY-87 IMU]
         RPLIDAR_HW[RPLIDAR A1M8]
-        CAMERA_HW[Camera Module 3]
     end
 
     Pi5 -- USB Serial\nleft_vel,right_vel --> Pico
@@ -84,7 +84,6 @@ graph TD
     MOTORS --> ENC
     GY87 --> IMU_FW
     RPLIDAR_HW --> LIDAR
-    CAMERA_HW --> CAM
 
     SB --> EKF
     EKF --> SLAM
@@ -164,9 +163,9 @@ The Anker Prime 12,000mAh 130W powers the Pi 5 and all connected electronics (co
 
 6× AA NiMH 1.2V 2800mAh batteries power the motors. NiMH chosen over alkaline for rechargeability and consistent voltage under load. Runtime is shorter than expected under heavy use — keep spare sets charged.
 
-### 2.9 camera_ros for Camera Integration
+### 2.9 camera_ros for Camera Integration (Optional)
 
-The `camera_ros` package by Christian Rauch was used for Camera Module 3 integration. It handles the libcamera stack natively as a ROS 2 node, publishing standard `sensor_msgs/Image` topics. This approach was chosen because it works reliably with the custom-built Raspberry Pi libcamera fork required for the IMX708 sensor on Ubuntu 24.04.
+The `camera_ros` package by Christian Rauch is included in the repository for optional Camera Module 3 integration. It handles the libcamera stack natively as a ROS 2 node, publishing standard `sensor_msgs/Image` topics. This is useful for future extensions like object detection or visual servoing, but is **not required** for the core navigation stack. If you don't plan to use a camera, you can skip the libcamera build (Section 7) and ignore the `camera_ros` submodule.
 
 ---
 
@@ -463,6 +462,8 @@ Install the **Remote - SSH** extension in VS Code. Connect to the Pi 5 and open 
 
 ## 7. libcamera Build from Source
 
+> **Optional:** This section is only needed if you want to use the Raspberry Pi Camera Module 3. The core navigation stack does not require a camera.
+
 The Pi 5 with Camera Module 3 (IMX708 sensor) on Ubuntu 24.04 requires the Raspberry Pi fork of libcamera. The standard Ubuntu package does not support this sensor.
 
 > This guide follows: https://dev.to/minindu_pasan_8f0e03c1063/how-to-setup-raspberry-pi-camera-module-3-on-ubuntu-2404-4pme
@@ -706,8 +707,8 @@ echo "source ~/pibot/pibot_ws/install/setup.bash" >> ~/.bashrc
 | Package | Purpose |
 |---------|---------|
 | `pibot_base` | Main package: serial bridge, URDF, EKF, SLAM, Nav2, launch files |
-| `camera_ros` | Camera Module 3 ROS 2 driver (submodule) |
-| `libcamera` | Raspberry Pi libcamera fork (submodule, shallow clone) |
+| `camera_ros` | Camera Module 3 ROS 2 driver — optional (submodule) |
+| `libcamera` | Raspberry Pi libcamera fork — optional (submodule, shallow clone) |
 
 ### 10.3 Key Topics
 
@@ -1088,6 +1089,12 @@ ros2 run nav2_map_server map_saver_cli -f ~/map \
 
 Creates `~/map.pgm` and `~/map.yaml`.
 
+### 14.6 Example Map
+
+Saved occupancy grid after mapping a room with cardboard box landmarks:
+
+![SLAM Map](media/slam_map.png)
+
 ---
 
 ## 15. Autonomous Navigation with Nav2
@@ -1103,6 +1110,10 @@ Wait for:
 ```
 [lifecycle_manager_navigation]: Managed nodes are active
 ```
+
+Nav2 running in Foxglove with the SLAM map, robot model, and TF frames:
+
+![Foxglove Nav2 Map](media/foxglove_nav2_map.png)
 
 ### 15.2 Initial Pose
 
@@ -1262,11 +1273,11 @@ Firmware crash requires manual BOOTSEL reset procedure. This cannot be avoided w
 
 ## Documents Still Needed
 
+- [ ] `media/robot.jpg` — Hero shot of the assembled robot
 - [ ] `media/robot_front.jpg` — Front view of assembled robot
 - [ ] `media/robot_side.jpg` — Side view showing three platform layers
 - [ ] `media/robot_top.jpg` — Top view showing lidar and camera
 - [ ] `media/robot_wiring.jpg` — Close-up of breadboard wiring
 - [ ] `media/slam_mapping.mp4` — Video: SLAM mapping with Foxglove showing map building in real time
 - [ ] `media/autonomous_nav.mp4` — Video: robot navigating autonomously to goal points
-- [ ] `media/foxglove_map.png` — Screenshot of final map in Foxglove
 
