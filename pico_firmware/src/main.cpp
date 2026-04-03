@@ -22,32 +22,18 @@
 #define ENC_RIGHT_A 20
 #define ENC_RIGHT_B 21
 
-// ---------------------------------------------------------------------------
-// Robot physical constants
-// ---------------------------------------------------------------------------
 const float WHEEL_DIAMETER_M = 0.065f;
 const float TICKS_PER_REV    = 2140.0f;
 const float DIST_PER_TICK    = PI * WHEEL_DIAMETER_M / TICKS_PER_REV;
-const float MAX_WHEEL_VEL    = (160.0f / 60.0f) * PI * WHEEL_DIAMETER_M;  // ~0.272 m/s
+const float MAX_WHEEL_VEL    = (160.0f / 60.0f) * PI * WHEEL_DIAMETER_M;
 
-// ---------------------------------------------------------------------------
-// PID timing
-// ---------------------------------------------------------------------------
 const unsigned long PID_INTERVAL_MS  = 10;   // 100 Hz
 const unsigned long SEND_INTERVAL_MS = 20;   // 50 Hz
 
-// ---------------------------------------------------------------------------
-// PID gains — tuned for ticks-per-interval units
-// At 0.15 m/s target = ~15.7 ticks per 10ms interval
-// Kp=1.5 means: error of 1 tick → PWM correction of 1.5
-// ---------------------------------------------------------------------------
 float KP =  1.5f;
 float KI =  0.8f;
 float KD =  0.05f;
 
-// ---------------------------------------------------------------------------
-// Motor driver
-// ---------------------------------------------------------------------------
 const int offsetA = -1;
 const int offsetB = -1;
 const int MIN_PWM =  30;
@@ -55,9 +41,6 @@ const int MIN_PWM =  30;
 Motor leftMotor  = Motor(AIN1, AIN2, PWMA, offsetA, STBY);
 Motor rightMotor = Motor(BIN1, BIN2, PWMB, offsetB, STBY);
 
-// ---------------------------------------------------------------------------
-// Encoder state
-// ---------------------------------------------------------------------------
 volatile long left_ticks  = 0;
 volatile long right_ticks = 0;
 int last_l_dir = 1;
@@ -66,9 +49,6 @@ int last_r_dir = 1;
 void leftEncoderISR()  { left_ticks  += last_l_dir; }
 void rightEncoderISR() { right_ticks += last_r_dir; }
 
-// ---------------------------------------------------------------------------
-// PID state per wheel
-// ---------------------------------------------------------------------------
 float left_integral    = 0.0f;
 float left_prev_error  = 0.0f;
 float right_integral   = 0.0f;
@@ -87,38 +67,22 @@ float computePID(float target_ticks, float actual_ticks,
     return KP * error + KI * integral + KD * deriv;
 }
 
-// ---------------------------------------------------------------------------
-// Target velocities in m/s — set by serial parser
-// ---------------------------------------------------------------------------
 float target_left_vel  = 0.0f;
 float target_right_vel = 0.0f;
 
-// ---------------------------------------------------------------------------
-// Serial input
-// ---------------------------------------------------------------------------
 const int MAX_CHARS = 64;
 char input_buf[MAX_CHARS];
 int  buf_idx = 0;
 
-// ---------------------------------------------------------------------------
-// IMU
-// ---------------------------------------------------------------------------
 Adafruit_MPU6050 mpu;
 
-// ---------------------------------------------------------------------------
-// Timing
-// ---------------------------------------------------------------------------
 unsigned long last_pid_time  = 0;
 unsigned long last_send_time = 0;
 
-// ---------------------------------------------------------------------------
-// Apply PID output to a motor
-// ---------------------------------------------------------------------------
 void applyMotor(Motor &motor, int &last_dir,
                 float target_vel, float pwm_output,
                 float &integral, float &prev_error) {
     if (abs(target_vel) < 1e-4f) {
-        // Stop — reset PID state
         last_dir   = 1;
         integral   = 0.0f;
         prev_error = 0.0f;
@@ -128,7 +92,6 @@ void applyMotor(Motor &motor, int &last_dir,
 
     int direction = target_vel > 0.0f ? 1 : -1;
 
-    // Reset integrator on direction change to prevent windup fighting
     if (direction != last_dir) {
         integral   = 0.0f;
         prev_error = 0.0f;
@@ -140,9 +103,6 @@ void applyMotor(Motor &motor, int &last_dir,
     motor.drive(pwm * direction);
 }
 
-// ---------------------------------------------------------------------------
-// Setup
-// ---------------------------------------------------------------------------
 void setup() {
     Serial.begin(115200);
 
@@ -171,12 +131,7 @@ void setup() {
     last_send_time = millis();
 }
 
-// ---------------------------------------------------------------------------
-// Main loop
-// ---------------------------------------------------------------------------
 void loop() {
-
-    // 1. Read incoming velocity commands: "left_vel,right_vel\n" in m/s
     while (Serial.available() > 0) {
         char c = Serial.read();
         if (c == '\n') {
@@ -200,7 +155,6 @@ void loop() {
         }
     }
 
-    // 2. PID velocity control at 100Hz
     unsigned long now = millis();
     if (now - last_pid_time >= PID_INTERVAL_MS) {
         last_pid_time = now;
@@ -221,7 +175,6 @@ void loop() {
         prev_rt = rt;
 
         // Convert m/s target to ticks per interval
-        // ticks_per_interval = vel * PID_INTERVAL_MS/1000 / DIST_PER_TICK
         float target_left_ticks  = tlv * (PID_INTERVAL_MS / 1000.0f) / DIST_PER_TICK;
         float target_right_ticks = trv * (PID_INTERVAL_MS / 1000.0f) / DIST_PER_TICK;
 
@@ -245,7 +198,6 @@ void loop() {
 #endif
     }
 
-    // 3. Send sensor data at 50Hz
     now = millis();
     if (now - last_send_time >= SEND_INTERVAL_MS) {
         last_send_time = now;

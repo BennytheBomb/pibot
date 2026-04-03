@@ -1,22 +1,3 @@
-"""
-serial_bridge.py — ROS 2 node that reads CSV data from a Raspberry Pi Pico 2W
-and publishes Odometry + IMU messages, and subscribes to cmd_vel for motor control.
-
-Pico serial format (50 Hz CSV):
-    left_ticks,right_ticks,ax,ay,az,gx,gy,gz
-
-IMU is mounted backwards on the robot:
-    robot_x = -imu_y
-    robot_y = -imu_x
-    robot_z =  imu_z
-
-Robot hardware:
-    Wheel diameter : 65 mm
-    Wheelbase      : 173 mm (centre to centre)
-    Encoder        : 8 pulses/rev → 960 ticks/rev (120:1 gearbox)
-    Max velocity   : ~0.272 m/s at 100% PWM (160 RPM * pi * 0.065)
-"""
-
 import math
 import threading
 
@@ -31,17 +12,12 @@ from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Imu
 from tf2_ros import TransformBroadcaster
 
-
-# ---------------------------------------------------------------------------
-# Constants
-# ---------------------------------------------------------------------------
 WHEEL_DIAMETER_M  = 0.065
 WHEELBASE_M       = 0.159
 TICKS_PER_REV     = 2140
-DIST_PER_TICK     = math.pi * WHEEL_DIAMETER_M / TICKS_PER_REV  # ~2.127e-4 m
+DIST_PER_TICK     = math.pi * WHEEL_DIAMETER_M / TICKS_PER_REV
 
-# Maximum linear wheel velocity at 100% PWM: 160 RPM * pi * 0.065 m
-MAX_WHEEL_VEL     = (160.0 / 60.0) * math.pi * WHEEL_DIAMETER_M  # ~0.272 m/s
+MAX_WHEEL_VEL     = (160.0 / 60.0) * math.pi * WHEEL_DIAMETER_M
 
 # Minimum PWM to overcome motor stiction (0–100 scale)
 MIN_SPEED         = 10
@@ -88,7 +64,6 @@ class SerialBridge(Node):
     def __init__(self):
         super().__init__('serial_bridge')
 
-        # ---- parameters ----
         self.declare_parameter('serial_port', '/dev/ttyACM0')
         self.declare_parameter('baud_rate', 115200)
         self.declare_parameter('timeout', 1.0)
@@ -97,12 +72,10 @@ class SerialBridge(Node):
         baud    = self.get_parameter('baud_rate').get_parameter_value().integer_value
         timeout = self.get_parameter('timeout').get_parameter_value().double_value
 
-        # ---- publishers ----
         self._odom_pub       = self.create_publisher(Odometry, '/odom', 10)
         self._imu_pub        = self.create_publisher(Imu, '/imu/data_raw', 10)
         self._tf_broadcaster = TransformBroadcaster(self)
 
-        # ---- cmd_vel subscriber ----
         self._cmd_vel_sub = self.create_subscription(
             Twist,
             '/cmd_vel',
@@ -110,7 +83,6 @@ class SerialBridge(Node):
             10,
         )
 
-        # ---- odometry state ----
         self._x           = 0.0
         self._y           = 0.0
         self._theta       = 0.0
@@ -118,7 +90,6 @@ class SerialBridge(Node):
         self._prev_right  = None
         self._prev_stamp  = None
 
-        # ---- serial port ----
         try:
             self._ser = serial.Serial(port, baud, timeout=timeout)
             self.get_logger().info(f'Opened serial port {port} at {baud} baud')
@@ -126,25 +97,18 @@ class SerialBridge(Node):
             self.get_logger().fatal(f'Cannot open serial port {port}: {exc}')
             raise SystemExit(1)
 
-        # ---- serial write lock (shared between cmd_vel and read thread) ----
         self._serial_lock = threading.Lock()
 
-        # ---- background reader thread ----
         self._stop_event = threading.Event()
         self._thread = threading.Thread(target=self._read_loop, daemon=True)
         self._thread.start()
 
         self.get_logger().info('Serial bridge ready — listening on /cmd_vel')
 
-    # ------------------------------------------------------------------
-    # cmd_vel callback — convert Twist to motor commands
-    # ------------------------------------------------------------------
-
     def _cmd_vel_callback(self, msg: Twist):
         linear  = msg.linear.x
         angular = msg.angular.z
 
-        # Clamp angular more aggressively to prevent spin
         angular = max(-1.0, min(1.0, angular))
         linear  = max(-MAX_WHEEL_VEL, min(MAX_WHEEL_VEL, linear))
 
@@ -157,7 +121,6 @@ class SerialBridge(Node):
         self._send_motor_command(left_vel, right_vel)
 
     def _send_motor_command(self, left_vel: float, right_vel: float):
-        # New protocol: send velocities in m/s directly to Pico PID
         command = f'{left_vel:.4f},{right_vel:.4f}\n'
         try:
             with self._serial_lock:
@@ -165,10 +128,6 @@ class SerialBridge(Node):
                 self._ser.flush()
         except serial.SerialException as exc:
             self.get_logger().error(f'Serial write error: {exc}')
-
-    # ------------------------------------------------------------------
-    # Serial reading (background thread)
-    # ------------------------------------------------------------------
 
     def _read_loop(self):
         while not self._stop_event.is_set():
@@ -210,15 +169,10 @@ class SerialBridge(Node):
         self._publish_imu(now, imu_ax, imu_ay, imu_az, imu_gx, imu_gy, imu_gz)
         self._update_odometry(now, left_ticks, right_ticks)
 
-    # ------------------------------------------------------------------
-    # IMU publisher
-    # ------------------------------------------------------------------
-
     def _publish_imu(self, stamp: Time,
                      imu_ax, imu_ay, imu_az,
                      imu_gx, imu_gy, imu_gz):
-        # Correct for backwards mounting:
-        #   robot_x = -imu_y,  robot_y = -imu_x,  robot_z = imu_z
+        # IMU is rotated by 180° around up axis
         msg = Imu()
         msg.header.stamp    = stamp.to_msg()
         msg.header.frame_id = 'imu_link'
@@ -231,7 +185,6 @@ class SerialBridge(Node):
         msg.angular_velocity.y = -imu_gx
         msg.angular_velocity.z =  imu_gz
 
-        # Orientation unknown — mark covariance[0] = -1
         msg.orientation_covariance[0] = -1.0
 
         for i in range(9):
@@ -239,10 +192,6 @@ class SerialBridge(Node):
             msg.angular_velocity_covariance[i]    = 0.0
 
         self._imu_pub.publish(msg)
-
-    # ------------------------------------------------------------------
-    # Odometry
-    # ------------------------------------------------------------------
 
     def _update_odometry(self, stamp: Time, left_ticks: int, right_ticks: int):
         if self._prev_left is None:
@@ -259,15 +208,12 @@ class SerialBridge(Node):
         d_s     = (d_left + d_right) / 2.0
         d_theta = (d_right - d_left) / WHEELBASE_M
 
-        # Integrate pose using midpoint heading
         self._x     += d_s * math.cos(self._theta + d_theta / 2.0)
         self._y     += d_s * math.sin(self._theta + d_theta / 2.0)
         self._theta += d_theta
 
-        # Normalise heading to [-pi, pi]
         self._theta = math.atan2(math.sin(self._theta), math.cos(self._theta))
 
-        # Body-frame velocities
         dt = (stamp - self._prev_stamp).nanoseconds / 1e9
         self._prev_stamp = stamp
         vx = d_s     / dt if dt > 0.0 else 0.0
@@ -276,7 +222,6 @@ class SerialBridge(Node):
         q         = _euler_to_quaternion(0.0, 0.0, self._theta)
         stamp_msg = stamp.to_msg()
 
-        # TF broadcast: odom → base_link
         tf = TransformStamped()
         tf.header.stamp    = stamp_msg
         tf.header.frame_id = 'odom'
@@ -287,7 +232,6 @@ class SerialBridge(Node):
         tf.transform.rotation      = q
         self._tf_broadcaster.sendTransform(tf)
 
-        # Odometry message
         odom = Odometry()
         odom.header.stamp    = stamp_msg
         odom.header.frame_id = 'odom'
@@ -308,10 +252,6 @@ class SerialBridge(Node):
         odom.twist.covariance[35] = 0.1   # wz
 
         self._odom_pub.publish(odom)
-
-    # ------------------------------------------------------------------
-    # Cleanup
-    # ------------------------------------------------------------------
 
     def destroy_node(self):
         # Stop motors before shutting down
