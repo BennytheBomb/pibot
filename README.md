@@ -2,7 +2,7 @@
 
 > A fully autonomous indoor mobile robot built on Raspberry Pi 5, featuring SLAM-based mapping, Nav2 autonomous navigation, and a complete ROS 2 software stack. Built from scratch as a learning project and open sourced for the robotics community.
 
-<!-- TODO: ![PiBot Robot](media/robot.jpg) -->
+![PiBot Robot](media/robot_front.jpg)
 
 ---
 
@@ -1268,16 +1268,3 @@ Firmware crash requires manual BOOTSEL reset procedure. This cannot be avoided w
 | Raspberry Pi 5 | https://datasheets.raspberrypi.com/rpi5/raspberry-pi-5-product-brief.pdf |
 | Raspberry Pi Pico 2W | https://datasheets.raspberrypi.com/picow/pico-2-w-datasheet.pdf |
 | RPLIDAR A1M8 | https://www.slamtec.ai/wp-content/uploads/2023/11/LD108_SLAMTEC_rplidar_datasheet_A1M8_v3.0_en.pdf |
-
----
-
-## Documents Still Needed
-
-- [ ] `media/robot.jpg` — Hero shot of the assembled robot
-- [ ] `media/robot_front.jpg` — Front view of assembled robot
-- [ ] `media/robot_side.jpg` — Side view showing three platform layers
-- [ ] `media/robot_top.jpg` — Top view showing lidar and camera
-- [ ] `media/robot_wiring.jpg` — Close-up of breadboard wiring
-- [ ] `media/slam_mapping.mp4` — Video: SLAM mapping with Foxglove showing map building in real time
-- [ ] `media/autonomous_nav.mp4` — Video: robot navigating autonomously to goal points
-
